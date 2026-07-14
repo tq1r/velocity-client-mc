@@ -108,14 +108,14 @@ def init_db():
     if not existing:
         # Delete any old default admin
         conn.execute("DELETE FROM admins WHERE username = 'admin'")
-        admin_hash = hash_password("tq1r", "velocity2024")
+        admin_hash = hash_password("velocity2024")
         conn.execute("INSERT INTO admins (username, password_hash) VALUES (?, ?)",
                       ("tq1r", admin_hash))
         conn.commit()
         print("[SETUP] Default admin created: tq1r / velocity2024")
     else:
         # Reset password in case it was changed to a broken hash
-        admin_hash = hash_password("tq1r", "velocity2024")
+        admin_hash = hash_password("velocity2024")
         conn.execute("UPDATE admins SET password_hash = ? WHERE username = 'tq1r'",
                       (admin_hash,))
         conn.commit()
