@@ -30,7 +30,7 @@ from flask import Flask, request, jsonify, render_template, session, redirect, u
 from flask_cors import CORS
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
-app.secret_key = secrets.token_hex(32)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'velocity-client-secret-key-2024')
 
 # Enable CORS for API routes (needed so the Minecraft mod can connect)
 CORS(app)
@@ -106,11 +106,11 @@ def init_db():
     # Create default admin if none exists
     c.execute("SELECT COUNT(*) FROM admins")
     if c.fetchone()[0] == 0:
-        admin_hash = hash_password("admin", "velocity2024")
+        admin_hash = hash_password("tq1r", "velocity2024")
         c.execute("INSERT INTO admins (username, password_hash) VALUES (?, ?)",
-                  ("admin", admin_hash))
+                  ("tq1r", admin_hash))
         conn.commit()
-        print("[SETUP] Default admin created: admin / velocity2024")
+        print("[SETUP] Default admin created: tq1r / velocity2024")
         print("[SETUP] Change this password immediately after first login!")
 
     conn.close()
