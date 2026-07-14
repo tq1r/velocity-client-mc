@@ -170,6 +170,15 @@ def get_client_ip():
     return request.remote_addr or 'unknown'
 
 # ============================================================
+# ROOT REDIRECT
+# ============================================================
+
+@app.route('/')
+def index():
+    """Redirect root to admin panel."""
+    return redirect(url_for('admin_login'))
+
+# ============================================================
 # MINECRAFT MOD API (called by the mod)
 # ============================================================
 
