@@ -31,6 +31,8 @@ from flask_cors import CORS
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'velocity-client-secret-key-2024')
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 # Enable CORS for API routes (needed so the Minecraft mod can connect)
 CORS(app)
@@ -482,7 +484,8 @@ def admin_login():
         if admin and verify_password(password, admin['password_hash']):
             session['admin_id'] = admin['id']
             session['admin_user'] = admin['username']
-            return redirect(url_for('admin_dashboard'))
+            session.permanent = True
+            return redirect(url_for('admin_dashboard'), code=303)
         else:
             return render_template('admin_login.html', error="Invalid credentials")
 
