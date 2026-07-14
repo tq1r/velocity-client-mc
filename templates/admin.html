@@ -159,7 +159,7 @@ input,button,select{font-family:inherit}
 <body>
 
 <!-- LOGIN -->
-<div class="login-wrap" id="loginPage">
+<div class="login-wrap" id="loginPage"{% if logged_in %} style="display:none"{% endif %}>
   <div class="login-box">
     <h1>Velocity Client</h1>
     <p>Admin Authentication</p>
@@ -173,7 +173,7 @@ input,button,select{font-family:inherit}
 </div>
 
 <!-- DASHBOARD -->
-<div id="dashboard" style="display:none">
+<div id="dashboard"{% if not logged_in %} style="display:none"{% endif %}>
   <div class="topbar">
     <h1>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
@@ -286,9 +286,15 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{
   errEl.textContent='';
   const fd=new FormData();fd.set('username',u);fd.set('password',p);
   try{
-    const res=await fetch('/admin/login',{method:'POST',body:fd});
-    if(res.redirected)window.location.href=res.url;
-    else{const t=await res.text(),d=new DOMParser().parseFromString(t,'text/html'),er=d.querySelector('.error');errEl.textContent=er?er.textContent:'Login failed';}
+    const res=await fetch('/admin/api/login',{method:'POST',body:fd,credentials:'include'});
+    const data=await res.json();
+    if(data.success){
+      document.getElementById('loginPage').style.display='none';
+      document.getElementById('dashboard').style.display='block';
+      loadStats();loadKeys();
+    }else{
+      errEl.textContent=data.message||'Invalid credentials';
+    }
   }catch(e){errEl.textContent='Connection error';}
 });
 

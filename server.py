@@ -448,11 +448,13 @@ def api_activate_license():
 # ============================================================
 
 @app.route('/admin')
-@require_admin
 def admin_dashboard():
-    """Main admin dashboard."""
-    conn = get_db()
+    """Main admin dashboard - serves the SPA template."""
+    logged_in = 'admin_id' in session or (request.cookies.get('vc_admin') == app.secret_key)
+    if not logged_in:
+        return render_template('admin.html', stats={}, logs=[], users=[], logged_in=False)
 
+    conn = get_db()
     stats = {
         'total_users': conn.execute("SELECT COUNT(*) FROM users").fetchone()[0],
         'total_keys': conn.execute("SELECT COUNT(*) FROM license_keys").fetchone()[0],
@@ -473,52 +475,35 @@ def admin_dashboard():
     ).fetchall()
 
     conn.close()
-    return render_template('admin.html', stats=stats, logs=recent_logs, users=recent_users)
+    return render_template('admin.html', stats=stats, logs=recent_logs, users=recent_users, logged_in=True)
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    """Admin login page."""
-    if request.method == 'POST':
-        # Accept both form data and JSON
-        if request.is_json:
-            data = request.get_json() or {}
-            username = data.get('username', '').strip()
-            password = data.get('password', '')
-        else:
-            username = request.form.get('username', '').strip()
-            password = request.form.get('password', '')
+    """Admin login - always redirect to /admin which handles login state."""
+    return redirect(url_for('admin_dashboard'))
 
-        conn = get_db()
-        admin = conn.execute(
-            "SELECT * FROM admins WHERE username = ?", (username,)
-        ).fetchone()
-        conn.close()
+@app.route('/admin/api/login', methods=['POST'])
+def admin_api_login():
+    """API login for the SPA dashboard."""
+    if request.is_json:
+        data = request.get_json() or {}
+        username = data.get('username', '').strip()
+        password = data.get('password', '')
+    else:
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
 
-        if admin and verify_password(password, admin['password_hash']):
-            session['admin_id'] = admin['id']
-            session['admin_user'] = admin['username']
-            # Render dashboard directly - no redirect (avoids cookie loss on Render proxy)
-            conn = get_db()
-            stats = {
-                'total_users': conn.execute("SELECT COUNT(*) FROM users").fetchone()[0],
-                'total_keys': conn.execute("SELECT COUNT(*) FROM license_keys").fetchone()[0],
-                'active_keys': conn.execute("SELECT COUNT(*) FROM license_keys WHERE is_active = 1").fetchone()[0],
-                'banned_users': conn.execute("SELECT COUNT(*) FROM users WHERE is_banned = 1").fetchone()[0],
-                'total_logins': conn.execute("SELECT COUNT(*) FROM auth_logs WHERE action = 'login' AND success = 1").fetchone()[0],
-                'today_logins': conn.execute(
-                    "SELECT COUNT(*) FROM auth_logs WHERE action = 'login' AND success = 1 AND date(created_at) = date('now')"
-                ).fetchone()[0],
-            }
-            recent_logs = conn.execute("SELECT * FROM auth_logs ORDER BY id DESC LIMIT 20").fetchall()
-            recent_users = conn.execute("SELECT * FROM users ORDER BY id DESC LIMIT 10").fetchall()
-            conn.close()
-            resp = make_response(render_template('admin.html', stats=stats, logs=recent_logs, users=recent_users))
-            resp.set_cookie('vc_admin', app.secret_key, max_age=86400*30, samesite='Lax', httponly=True, path='/admin')
-            return resp
-        else:
-            return render_template('admin_login.html', error="Invalid credentials")
+    conn = get_db()
+    admin = conn.execute("SELECT * FROM admins WHERE username = ?", (username,)).fetchone()
+    conn.close()
 
-    return render_template('admin_login.html', error=None)
+    if admin and verify_password(password, admin['password_hash']):
+        session['admin_id'] = admin['id']
+        session['admin_user'] = admin['username']
+        resp = jsonify({"success": True})
+        resp.set_cookie('vc_admin', app.secret_key, max_age=86400*30, samesite='Lax', httponly=True, path='/admin')
+        return resp
+    return jsonify({"success": False, "message": "Invalid credentials"}), 401
 
 @app.route('/test-form', methods=['GET', 'POST'])
 def test_form():
