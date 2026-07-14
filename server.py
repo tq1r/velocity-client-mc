@@ -26,7 +26,7 @@ import os
 import argparse
 from datetime import datetime, timedelta
 from functools import wraps
-from flask import Flask, request, jsonify, render_template, session, redirect, url_for, send_from_directory
+from flask import Flask, request, jsonify, render_template, session, redirect, url_for, send_from_directory, make_response
 from flask_cors import CORS, cross_origin
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -154,9 +154,13 @@ def require_admin(f):
     """Decorator: require admin login for dashboard routes."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        if 'admin_id' not in session:
-            return redirect(url_for('admin_login'))
-        return f(*args, **kwargs)
+        # Check session first, then fallback to custom cookie
+        if 'admin_id' in session:
+            return f(*args, **kwargs)
+        admin_token = request.cookies.get('vc_admin')
+        if admin_token and admin_token == app.secret_key:
+            return f(*args, **kwargs)
+        return redirect(url_for('admin_login'))
     return decorated
 
 def log_auth(username, action, ip="", hwid="", success=0, details=""):
@@ -487,8 +491,24 @@ def admin_login():
         if admin and verify_password(password, admin['password_hash']):
             session['admin_id'] = admin['id']
             session['admin_user'] = admin['username']
-            session.permanent = True
-            return redirect(url_for('admin_dashboard'), code=303)
+            # Render dashboard directly - no redirect (avoids cookie loss on Render proxy)
+            conn = get_db()
+            stats = {
+                'total_users': conn.execute("SELECT COUNT(*) FROM users").fetchone()[0],
+                'total_keys': conn.execute("SELECT COUNT(*) FROM license_keys").fetchone()[0],
+                'active_keys': conn.execute("SELECT COUNT(*) FROM license_keys WHERE is_active = 1").fetchone()[0],
+                'banned_users': conn.execute("SELECT COUNT(*) FROM users WHERE is_banned = 1").fetchone()[0],
+                'total_logins': conn.execute("SELECT COUNT(*) FROM auth_logs WHERE action = 'login' AND success = 1").fetchone()[0],
+                'today_logins': conn.execute(
+                    "SELECT COUNT(*) FROM auth_logs WHERE action = 'login' AND success = 1 AND date(created_at) = date('now')"
+                ).fetchone()[0],
+            }
+            recent_logs = conn.execute("SELECT * FROM auth_logs ORDER BY id DESC LIMIT 20").fetchall()
+            recent_users = conn.execute("SELECT * FROM users ORDER BY id DESC LIMIT 10").fetchall()
+            conn.close()
+            resp = make_response(render_template('admin.html', stats=stats, logs=recent_logs, users=recent_users))
+            resp.set_cookie('vc_admin', app.secret_key, max_age=86400*30, samesite='Lax', httponly=True, path='/admin')
+            return resp
         else:
             return render_template('admin_login.html', error="Invalid credentials")
 
