@@ -191,15 +191,27 @@ def debug():
     """Debug endpoint to check DB state and password verification."""
     try:
         conn = get_db()
-        admins = conn.execute("SELECT id, username, password_hash FROM admins").fetchall()
-        result = []
-        for a in admins:
-            d = dict(a)
-            test = verify_password("velocity2024", a['password_hash'])
-            d['password_test'] = test
-            result.append(d)
+        admin = conn.execute("SELECT * FROM admins WHERE username = 'tq1r'").fetchone()
+        if not admin:
+            conn.close()
+            return jsonify({"error": "No admin found"})
+        
+        stored = admin['password_hash']
+        salt, stored_hashed = stored.split('$', 1)
+        recomputed = hashlib.sha256((salt + "velocity2024").encode()).hexdigest()
+        full_recomputed = f"{salt}:${recomputed}"
+        
+        result = {
+            "stored_full": stored,
+            "salt": salt,
+            "stored_hash_part": stored_hashed,
+            "recomputed_hash_part": recomputed,
+            "hash_match": stored_hashed == recomputed,
+            "full_match": full_recomputed == stored,
+            "verify_fn_result": verify_password("velocity2024", stored),
+        }
         conn.close()
-        return jsonify({"admins": result})
+        return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
