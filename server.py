@@ -178,13 +178,30 @@ def get_client_ip():
     return request.remote_addr or 'unknown'
 
 # ============================================================
-# ROOT REDIRECT
+# ROOT REDIRECT + DEBUG
 # ============================================================
 
 @app.route('/')
 def index():
     """Redirect root to admin panel."""
     return redirect(url_for('admin_login'))
+
+@app.route('/debug')
+def debug():
+    """Debug endpoint to check DB state and password verification."""
+    try:
+        conn = get_db()
+        admins = conn.execute("SELECT id, username, password_hash FROM admins").fetchall()
+        result = []
+        for a in admins:
+            d = dict(a)
+            test = verify_password("velocity2024", a['password_hash'])
+            d['password_test'] = test
+            result.append(d)
+        conn.close()
+        return jsonify({"admins": result})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # ============================================================
 # MINECRAFT MOD API (called by the mod)
