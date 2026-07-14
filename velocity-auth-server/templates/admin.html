@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Velocity Client - Admin Panel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a28;--border:#2a2a3a;--primary:#00d4ff;--primary-dim:#00d4ff22;--danger:#ff4466;--danger-dim:#ff446622;--success:#44ff88;--success-dim:#44ff8822;--warning:#ffaa00;--text:#e0e0e8;--text2:#888899;--text3:#555566}
+html{font-size:16px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden}
+a{color:var(--primary);text-decoration:none}
+input,button,select{font-family:inherit}
+
+/* ===== LOGIN ===== */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;background:radial-gradient(ellipse at 50% 0%,#00d4ff08 0%,transparent 60%);padding:20px}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:36px 28px;width:100%;max-width:380px;text-align:center}
+.login-box h1{font-size:22px;margin-bottom:4px;background:linear-gradient(135deg,#00d4ff,#0088ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.login-box p{color:var(--text2);font-size:13px;margin-bottom:24px}
+.login-box input{width:100%;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:16px;margin-bottom:12px;outline:none;transition:.2s;-webkit-appearance:none}
+.login-box input:focus{border-color:var(--primary)}
+.login-box button{width:100%;padding:13px;background:linear-gradient(135deg,#00d4ff,#0088ff);border:none;border-radius:10px;color:#000;font-weight:700;font-size:15px;cursor:pointer;transition:.2s}
+.login-box button:hover{opacity:.9}
+.login-box button:active{transform:scale(.98)}
+.login-box .error{color:var(--danger);font-size:13px;margin-top:14px}
+
+/* ===== DASHBOARD ===== */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;gap:8px}
+.topbar h1{font-size:15px;background:linear-gradient(135deg,#00d4ff,#0088ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar h1 svg{width:20px;height:20px;flex-shrink:0}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.topbar-right span{color:var(--text2);font-size:12px;display:none}
+.btn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;-webkit-appearance:none}
+.btn:hover{border-color:var(--primary);color:var(--primary)}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:linear-gradient(135deg,#00d4ff,#0088ff);border:none;color:#000;font-weight:600}
+.btn-primary:hover{opacity:.9}
+.btn-danger{border-color:var(--danger);color:var(--danger)}
+.btn-danger:hover{background:var(--danger-dim)}
+.btn-sm{padding:6px 10px;font-size:12px;border-radius:6px}
+
+.content{max-width:1400px;margin:0 auto;padding:16px}
+
+/* ===== STATS ===== */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;transition:.2s}
+.stat-card:hover{border-color:var(--primary)}
+.stat-card .label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.stat-card .value{font-size:24px;font-weight:700;line-height:1.1}
+.stat-card .sub{font-size:10px;color:var(--text3);margin-top:3px}
+.c1{border-left:3px solid #00d4ff}.c1 .value{color:#00d4ff}
+.c2{border-left:3px solid #44ff88}.c2 .value{color:#44ff88}
+.c3{border-left:3px solid #ffaa00}.c3 .value{color:#ffaa00}
+.c4{border-left:3px solid #ff4466}.c4 .value{color:#ff4466}
+.c5{border-left:3px solid #aa66ff}.c5 .value{color:#aa66ff}
+
+/* ===== TABS ===== */
+.tabs{display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:10px 18px;cursor:pointer;font-size:13px;color:var(--text2);border-bottom:2px solid transparent;transition:.15s;flex-shrink:0;user-select:none;-webkit-user-select:none}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.panel{display:none}.panel.active{display:block}
+
+/* ===== TABLE ===== */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;-webkit-overflow-scrolling:touch}
+.table-scroll{overflow-x:auto;overflow-y:auto;max-height:60vh;-webkit-overflow-scrolling:touch}
+.table-wrap table{width:100%;border-collapse:collapse;font-size:12px;min-width:600px}
+.table-wrap th{background:var(--surface2);padding:10px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1}
+.table-wrap td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.table-wrap tr:last-child td{border-bottom:none}
+.table-wrap tr:hover td{background:#ffffff05}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;white-space:nowrap}
+.badge-green{background:var(--success-dim);color:var(--success)}
+.badge-red{background:var(--danger-dim);color:var(--danger)}
+.badge-yellow{background:#ffaa0022;color:#ffaa00}
+.badge-blue{background:var(--primary-dim);color:var(--primary)}
+.mono{font-family:'SF Mono','Fira Code','Cascadia Code',monospace;font-size:11px;color:#ccc;word-break:break-all}
+.truncate{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.actions{display:flex;gap:4px;flex-wrap:nowrap}
+
+/* ===== PANEL HEADER ===== */
+.panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px}
+.panel-header span{color:var(--text2);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ===== MODALS ===== */
+.modal-overlay{display:none;position:fixed;inset:0;background:#00000088;z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 20px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:17px;margin-bottom:18px}
+.modal label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.modal input,.modal select{width:100%;padding:11px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;margin-bottom:12px;outline:none;-webkit-appearance:none}
+.modal input:focus{border-color:var(--primary)}
+.modal .btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+
+/* Generated keys */
+.gen-keys{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:12px;max-height:180px;overflow-y:auto;font-family:'SF Mono','Fira Code',monospace;font-size:12px;color:var(--success);word-break:break-all;line-height:1.9;-webkit-overflow-scrolling:touch}
+.gen-keys .info{color:var(--text2);font-size:11px;font-family:inherit;margin-bottom:6px}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 20px;font-size:13px;z-index:300;opacity:0;transition:.3s;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.success{border-color:var(--success);color:var(--success)}
+.toast.error{border-color:var(--danger);color:var(--danger)}
+
+/* ===== EMPTY ===== */
+.empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:13px}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+
+/* ===== MOBILE CARDS (replaces tables on small screens) ===== */
+@media(max-width:640px){
+  .stats{grid-template-columns:repeat(2,1fr);gap:8px}
+  .stat-card{padding:12px}
+  .stat-card .value{font-size:20px}
+  .content{padding:10px}
+  .topbar{padding:10px 12px}
+  .tab{padding:9px 14px;font-size:12px}
+  .btn{padding:7px 12px;font-size:12px}
+  .btn-sm{padding:5px 8px;font-size:11px}
+
+  /* Convert table rows to card layout on phones */
+  .table-wrap table,.table-wrap thead,.table-wrap tbody,.table-wrap th,.table-wrap td,.table-wrap tr{display:block}
+  .table-wrap thead{display:none}
+  .table-scroll{max-height:none;overflow:visible}
+
+  .table-wrap tr{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;position:relative}
+  .table-wrap tr:last-child{margin-bottom:0}
+  .table-wrap tr:hover td{background:transparent}
+  .table-wrap td{border:none;padding:3px 0;font-size:13px}
+  .table-wrap td::before{content:attr(data-label);display:block;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:1px}
+  .table-wrap td:first-child{font-weight:600;font-size:14px}
+  .table-wrap td:first-child::before{display:none}
+  .actions{margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+
+  .modal{padding:20px 16px;border-radius:14px}
+  .modal input{font-size:16px /* prevents iOS zoom */}
+}
+
+/* ===== TABLETS ===== */
+@media(min-width:641px) and (max-width:1024px){
+  .stats{grid-template-columns:repeat(3,1fr)}
+  .topbar-right span{display:inline}
+}
+
+/* ===== DESKTOP ===== */
+@media(min-width:1025px){
+  .stats{grid-template-columns:repeat(5,1fr)}
+  .topbar-right span{display:inline}
+  .content{padding:20px 24px}
+  .table-scroll{max-height:none;overflow:visible}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginPage">
+  <div class="login-box">
+    <h1>Velocity Client</h1>
+    <p>Admin Authentication</p>
+    <form id="loginForm">
+      <input type="text" id="loginUser" placeholder="Admin username" autocomplete="off" autocapitalize="off" autocorrect="off" required>
+      <input type="password" id="loginPass" placeholder="Password" required>
+      <button type="submit">Sign In</button>
+      <div class="error" id="loginError"></div>
+    </form>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none">
+  <div class="topbar">
+    <h1>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      <span>Velocity Admin</span>
+    </h1>
+    <div class="topbar-right">
+      <span id="adminName">admin</span>
+      <a href="/admin/logout" class="btn btn-sm">Logout</a>
+    </div>
+  </div>
+  <div class="content">
+    <div class="stats">
+      <div class="stat-card c1"><div class="label">Users</div><div class="value" id="sUsers">-</div><div class="sub">Registered</div></div>
+      <div class="stat-card c2"><div class="label">Keys</div><div class="value" id="sKeys">-</div><div class="sub" id="sKeysSub">Active / Total</div></div>
+      <div class="stat-card c3"><div class="label">Today</div><div class="value" id="sToday">-</div><div class="sub">Logins today</div></div>
+      <div class="stat-card c4"><div class="label">Banned</div><div class="value" id="sBanned">-</div><div class="sub">Blocked</div></div>
+      <div class="stat-card c5"><div class="label">All Time</div><div class="value" id="sLogins">-</div><div class="sub">Total logins</div></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="keys">Keys</div>
+      <div class="tab" data-tab="users">Users</div>
+      <div class="tab" data-tab="logs">Logs</div>
+    </div>
+
+    <!-- KEYS -->
+    <div class="panel active" id="panel-keys">
+      <div class="panel-header">
+        <span id="keyCount">Loading...</span>
+        <button class="btn btn-primary" onclick="openGenModal()">+ Generate</button>
+      </div>
+      <div class="table-wrap"><div class="table-scroll">
+        <table>
+          <thead><tr><th>Key</th><th>Note</th><th>Uses</th><th>Status</th><th>Expires</th><th>Created</th><th>Actions</th></tr></thead>
+          <tbody id="keysBody"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- USERS -->
+    <div class="panel" id="panel-users">
+      <div class="panel-header">
+        <span id="userCount">Loading...</span>
+      </div>
+      <div class="table-wrap"><div class="table-scroll">
+        <table>
+          <thead><tr><th>User</th><th>Key</th><th>HWID</th><th>Last Login</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </div></div>
+    </div>
+
+    <!-- LOGS -->
+    <div class="panel" id="panel-logs">
+      <div class="panel-header">
+        <span>Recent authentication attempts</span>
+      </div>
+      <div class="table-wrap"><div class="table-scroll">
+        <table>
+          <thead><tr><th>Time</th><th>User</th><th>Action</th><th>IP</th><th>Result</th><th>Details</th></tr></thead>
+          <tbody id="logsBody"></tbody>
+        </table>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- GENERATE MODAL -->
+<div class="modal-overlay" id="genModal">
+  <div class="modal">
+    <h2>Generate Keys</h2>
+    <label>Number of Keys</label>
+    <input type="number" id="genCount" value="1" min="1" max="100" inputmode="numeric">
+    <label>Note (optional)</label>
+    <input type="text" id="genNote" placeholder="e.g. Discord giveaway" autocapitalize="sentences">
+    <label>Max Uses Per Key</label>
+    <input type="number" id="genMaxUses" value="1" min="1" max="1000" inputmode="numeric">
+    <label>Expires In (days, empty = permanent)</label>
+    <input type="number" id="genDays" placeholder="Permanent" min="1" inputmode="numeric">
+    <div class="btn-row">
+      <button class="btn" onclick="closeGenModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="generateKeys()">Generate</button>
+    </div>
+    <div class="gen-keys" id="genResult" style="display:none"></div>
+  </div>
+</div>
+
+<!-- BAN MODAL -->
+<div class="modal-overlay" id="banModal">
+  <div class="modal">
+    <h2 id="banTitle">Ban User</h2>
+    <label>Reason</label>
+    <input type="text" id="banReason" placeholder="Reason for ban" value="Violation of terms" autocapitalize="sentences">
+    <div class="btn-row">
+      <button class="btn" onclick="closeBanModal()">Cancel</button>
+      <button class="btn btn-danger" id="banConfirmBtn" onclick="confirmBan()">Ban</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentBanUserId=null,currentBanState=true;
+
+// Login
+document.getElementById('loginForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const u=document.getElementById('loginUser').value,p=document.getElementById('loginPass').value,errEl=document.getElementById('loginError');
+  errEl.textContent='';
+  const fd=new FormData();fd.set('username',u);fd.set('password',p);
+  try{
+    const res=await fetch('/admin/login',{method:'POST',body:fd});
+    if(res.redirected)window.location.href=res.url;
+    else{const t=await res.text(),d=new DOMParser().parseFromString(t,'text/html'),er=d.querySelector('.error');errEl.textContent=er?er.textContent:'Login failed';}
+  }catch(e){errEl.textContent='Connection error';}
+});
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
+    if(tab.dataset.tab==='keys')loadKeys();
+    if(tab.dataset.tab==='users')loadUsers();
+    if(tab.dataset.tab==='logs')loadLogs();
+  });
+});
+
+// Helpers
+async function api(p,o={}){return(await fetch(p,o)).json();}
+function showToast(m,t='success'){const e=document.getElementById('toast');e.textContent=m;e.className='toast '+t+' show';setTimeout(()=>e.className='toast',3000);}
+function esc(s){if(!s)return'-';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+function timeAgo(s){if(!s)return'-';const d=new Date(s+'Z'),n=Date.now(),f=(n-d)/1000;if(f<60)return'just now';if(f<3600)return Math.floor(f/60)+'m';if(f<86400)return Math.floor(f/3600)+'h';return Math.floor(f/86400)+'d';}
+function shortDate(s){return s?s.substring(0,10):'-';}
+function isMobile(){return window.innerWidth<=640;}
+
+// Stats
+async function loadStats(){try{const s=await api('/admin/api/stats');document.getElementById('sUsers').textContent=s.total_users;document.getElementById('sKeys').textContent=s.active_keys+'/'+s.total_keys;document.getElementById('sKeysSub').textContent=s.active_keys+' active / '+s.total_keys+' total';document.getElementById('sToday').textContent=s.today_logins;document.getElementById('sBanned').textContent=s.banned_users;document.getElementById('sLogins').textContent=s.total_logins;}catch(e){}}
+
+// Keys
+async function loadKeys(){
+  try{
+    const keys=await api('/admin/api/keys');
+    document.getElementById('keyCount').textContent=keys.length+' keys';
+    const body=document.getElementById('keysBody');
+    if(!keys.length){body.innerHTML='<tr><td colspan="7" class="empty">No keys yet. Tap Generate to create some.</td></tr>';return;}
+    const m=isMobile();
+    body.innerHTML=keys.map(k=>`
+      <tr>
+        <td data-label="" class="mono">${esc(k.key)}</td>
+        ${m?`<td data-label="Note">${esc(k.note)||'-'}</td><td data-label="Uses">${k.current_uses}/${k.max_uses}</td><td data-label="Status">${k.is_active?'<span class="badge badge-green">Active</span>':'<span class="badge badge-red">Off</span>'}</td><td data-label="Expires">${k.expires_at?shortDate(k.expires_at):'<span class="badge badge-blue">Perm</span>'}</td>`
+        :`<td class="truncate">${esc(k.note)}</td><td>${k.current_uses} / ${k.max_uses}</td><td>${k.is_active?'<span class="badge badge-green">Active</span>':'<span class="badge badge-red">Disabled</span>'}</td><td>${k.expires_at?shortDate(k.expires_at):'<span class="badge badge-blue">Permanent</span>'}</td><td style="color:var(--text3);font-size:11px">${shortDate(k.created_at)}</td>`}
+        <td class="actions" data-label="">
+          <button class="btn btn-sm" onclick="toggleKey(${k.id})">${k.is_active?'&#10060;':'&#9989;'}</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteKey(${k.id})">&#128465;</button>
+        </td>
+      </tr>`).join('');
+  }catch(e){console.error(e);}
+}
+
+async function toggleKey(id){await api('/admin/api/keys/'+id+'/toggle',{method:'POST'});showToast('Key toggled');loadKeys();loadStats();}
+async function deleteKey(id){if(!confirm('Delete this key?'))return;await api('/admin/api/keys/'+id+'/delete',{method:'POST'});showToast('Key deleted');loadKeys();loadStats();}
+
+function openGenModal(){document.getElementById('genModal').classList.add('show');document.getElementById('genResult').style.display='none';}
+function closeGenModal(){document.getElementById('genModal').classList.remove('show');}
+
+async function generateKeys(){
+  const count=parseInt(document.getElementById('genCount').value)||1,note=document.getElementById('genNote').value,maxUses=parseInt(document.getElementById('genMaxUses').value)||1,days=document.getElementById('genDays').value;
+  const res=await api('/admin/api/keys',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({count,note,max_uses:maxUses,days})});
+  if(res.success&&res.keys.length){const el=document.getElementById('genResult');el.style.display='block';el.innerHTML='<div class="info">'+res.keys.length+' key(s):</div>'+res.keys.map(k=>'<div>'+k+'</div>').join('');showToast(res.keys.length+' key(s) generated!');loadKeys();loadStats();}else showToast('Failed','error');
+}
+
+// Users
+async function loadUsers(){
+  try{
+    const users=await api('/admin/api/users');
+    document.getElementById('userCount').textContent=users.length+' users';
+    const body=document.getElementById('usersBody');
+    if(!users.length){body.innerHTML='<tr><td colspan="6" class="empty">No users yet.</td></tr>';return;}
+    const m=isMobile();
+    body.innerHTML=users.map(u=>`
+      <tr>
+        <td data-label=""><strong>${esc(u.username)}</strong></td>
+        ${m?`<td data-label="Key" class="mono" style="font-size:11px">${esc(u.license_key)||'-'}</td><td data-label="HWID" class="mono" style="font-size:10px">${u.hwid?u.hwid.substring(0,12)+'...':'-'}</td><td data-label="Last Login">${timeAgo(u.last_login)}</td>`
+        :`<td class="mono" style="font-size:11px">${esc(u.license_key)||'<span style="color:var(--text3)">none</span>'}</td><td class="mono" style="font-size:10px" title="${esc(u.hwid)}">${u.hwid?u.hwid.substring(0,16)+'...':'-'}</td><td style="color:var(--text3);font-size:12px">${timeAgo(u.last_login)}</td>`}
+        <td data-label="Status">${u.is_banned?'<span class="badge badge-red" title="'+esc(u.ban_reason)+'">Banned</span>':'<span class="badge badge-green">Active</span>'}</td>
+        <td class="actions" data-label="">
+          <button class="btn btn-sm" onclick="openBanModal(${u.id},${u.is_banned})">${u.is_banned?'&#9989;':'&#128683;'}</button>
+          <button class="btn btn-sm" onclick="resetHwid(${u.id})">HWID</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id})">&#128465;</button>
+        </td>
+      </tr>`).join('');
+  }catch(e){console.error(e);}
+}
+
+function openBanModal(id,banned){currentBanUserId=id;currentBanState=!banned;document.getElementById('banTitle').textContent=banned?'Unban User':'Ban User';document.getElementById('banConfirmBtn').textContent=banned?'Unban':'Ban';document.getElementById('banReason').value=banned?'':'Violation of terms';document.getElementById('banModal').classList.add('show');}
+function closeBanModal(){document.getElementById('banModal').classList.remove('show');}
+
+async function confirmBan(){const r=document.getElementById('banReason').value||'No reason';await api('/admin/api/users/'+currentBanUserId+'/ban',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:r})});closeBanModal();showToast(currentBanState?'User banned':'User unbanned');loadUsers();loadStats();}
+async function resetHwid(id){if(!confirm("Reset this user's HWID? They can login from another PC."))return;await api('/admin/api/users/'+id+'/reset_hwid',{method:'POST'});showToast('HWID reset');loadUsers();}
+async function deleteUser(id){if(!confirm('Delete this user permanently?'))return;await api('/admin/api/users/'+id+'/delete',{method:'POST'});showToast('User deleted');loadUsers();loadStats();}
+
+// Logs
+async function loadLogs(){
+  try{
+    const logs=await api('/admin/api/logs?limit=100');
+    const body=document.getElementById('logsBody');
+    if(!logs.length){body.innerHTML='<tr><td colspan="6" class="empty">No logs yet.</td></tr>';return;}
+    const m=isMobile();
+    body.innerHTML=logs.map(l=>`
+      <tr>
+        <td data-label="" style="color:var(--text3);font-size:11px;white-space:nowrap">${timeAgo(l.created_at)}</td>
+        ${m?`<td data-label="User">${esc(l.username)||'-'}</td><td data-label="Action"><span class="badge badge-${l.action==='login'?'blue':l.action==='register'?'green':'yellow'}">${esc(l.action)}</span></td><td data-label="IP" class="mono" style="font-size:10px">${esc(l.ip)}</td>`
+        :`<td>${esc(l.username)||'-'}</td><td><span class="badge badge-${l.action==='login'?'blue':l.action==='register'?'green':'yellow'}">${esc(l.action)}</span></td><td class="mono" style="font-size:11px">${esc(l.ip)}</td>`}
+        <td data-label="Result">${l.success?'<span class="badge badge-green">OK</span>':'<span class="badge badge-red">Fail</span>'}</td>
+        <td data-label="Details" class="truncate" style="max-width:200px;color:var(--text3);font-size:11px" title="${esc(l.details)}">${esc(l.details)}</td>
+      </tr>`).join('');
+  }catch(e){console.error(e);}
+}
+
+// Init
+loadStats();loadKeys();
+setInterval(loadStats,30000);
+window.addEventListener('resize',()=>{/* re-render on rotation */if(document.getElementById('panel-keys').classList.contains('active'))loadKeys();if(document.getElementById('panel-users').classList.contains('active'))loadUsers();});
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: velocity-auth
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: "1"

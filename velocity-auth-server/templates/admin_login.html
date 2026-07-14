@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Velocity Client - Admin Login</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0a0a0f;color:#e0e0e8;min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:#12121a;border:1px solid #2a2a3a;border-radius:16px;padding:36px 28px;width:100%;max-width:380px;text-align:center}
+.login-box h1{font-size:22px;margin-bottom:4px;background:linear-gradient(135deg,#00d4ff,#0088ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.login-box p{color:#888899;font-size:13px;margin-bottom:24px}
+.login-box input{width:100%;padding:12px 14px;background:#1a1a28;border:1px solid #2a2a3a;border-radius:10px;color:#e0e0e8;font-size:16px;margin-bottom:12px;outline:none;transition:.2s;-webkit-appearance:none}
+.login-box input:focus{border-color:#00d4ff}
+.login-box button{width:100%;padding:13px;background:linear-gradient(135deg,#00d4ff,#0088ff);border:none;border-radius:10px;color:#000;font-weight:700;font-size:15px;cursor:pointer;transition:.2s}
+.login-box button:hover{opacity:.9}
+.login-box button:active{transform:scale(.98)}
+.login-box .error{color:#ff4466;font-size:13px;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="login-box">
+  <h1>Velocity Client</h1>
+  <p>Admin Authentication</p>
+  <form method="POST" action="/admin/login">
+    <input type="text" name="username" placeholder="Admin username" autocomplete="off" autocapitalize="off" autocorrect="off" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <button type="submit">Sign In</button>
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+  </form>
+</div>
+</body>
+</html>
