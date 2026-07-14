@@ -33,9 +33,7 @@ app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'velocity-client-secret-key-2024')
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
-
-# Enable CORS for API routes (needed so the Minecraft mod can connect)
-CORS(app)
+app.config['SESSION_COOKIE_SECURE'] = False
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'velocity_auth.db')
 
@@ -219,9 +217,11 @@ def debug():
 
 # ============================================================
 # MINECRAFT MOD API (called by the mod)
+# CORS enabled per-route so it doesn't break session cookies
 # ============================================================
 
 @app.route('/api/init', methods=['POST'])
+@cross_origin()
 def api_init():
     """Initialize connection - verify the server is reachable."""
     return jsonify({
@@ -231,6 +231,7 @@ def api_init():
     })
 
 @app.route('/api/login', methods=['POST'])
+@cross_origin()
 def api_login():
     """Authenticate a user with username and password."""
     data = request.get_json() or {}
@@ -287,6 +288,7 @@ def api_login():
     })
 
 @app.route('/api/register', methods=['POST'])
+@cross_origin()
 def api_register():
     """Register a new user with a license key."""
     data = request.get_json() or {}
@@ -361,6 +363,7 @@ def api_register():
     })
 
 @app.route('/api/activate', methods=['POST'])
+@cross_origin()
 def api_activate_license():
     """Activate a license key directly (no account needed)."""
     data = request.get_json() or {}
