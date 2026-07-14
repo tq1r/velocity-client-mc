@@ -132,11 +132,11 @@ def hash_password(password, salt=None):
     if salt is None:
         salt = secrets.token_hex(16)
     hashed = hashlib.sha256((salt + password).encode()).hexdigest()
-    return f"{salt}:${hashed}"
+    return f"{salt}${hashed}"
 
 def verify_password(password, stored_hash):
     """Verify a password against its stored hash."""
-    if ':' not in stored_hash and '$' not in stored_hash:
+    if '$' not in stored_hash:
         return False
     try:
         salt, hashed = stored_hash.split('$', 1)
