@@ -522,7 +522,9 @@ def test_form():
 def admin_logout():
     """Admin logout."""
     session.clear()
-    return redirect(url_for('admin_login'))
+    resp = redirect(url_for('admin_dashboard'))
+    resp.delete_cookie('vc_admin', path='/admin')
+    return resp
 
 # --- API routes for dashboard AJAX calls ---
 
