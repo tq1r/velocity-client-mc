@@ -22,52 +22,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="login-box">
   <h1>Velocity Client</h1>
   <p>Admin Authentication</p>
-  <form id="loginForm">
-    <input type="text" name="username" id="username" placeholder="Admin username" autocomplete="off" autocapitalize="off" autocorrect="off" required>
-    <input type="password" name="password" id="password" placeholder="Password" required>
+  <form method="POST" action="/admin/login">
+    <input type="text" name="username" placeholder="Admin username" autocomplete="off" autocapitalize="off" autocorrect="off" required>
+    <input type="password" name="password" placeholder="Password" required>
     <button type="submit">Sign In</button>
-    <div class="error" id="error" style="display:none"></div>
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
   </form>
 </div>
-<script>
-document.getElementById('loginForm').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  const errEl = document.getElementById('error');
-  errEl.style.display = 'none';
-  const btn = this.querySelector('button');
-  btn.textContent = 'Signing in...';
-  btn.disabled = true;
-  try {
-    const fd = new FormData(this);
-    const res = await fetch('/admin/login', {
-      method: 'POST',
-      body: fd,
-      credentials: 'include'
-    });
-    if (res.ok) {
-      // Server returns dashboard HTML directly on success
-      const html = await res.text();
-      if (html.includes('admin-dashboard') || html.includes('Velocity Client Dashboard')) {
-        document.open();
-        document.write(html);
-        document.close();
-        window.history.pushState({}, '', '/admin');
-      } else {
-        window.location.href = '/admin';
-      }
-    } else {
-      const text = await res.text();
-      const match = text.match(/class="error"[^>]*>(.*?)<\//);
-      errEl.textContent = match ? match[1] : 'Invalid credentials';
-      errEl.style.display = 'block';
-    }
-  } catch(err) {
-    errEl.textContent = 'Connection error';
-    errEl.style.display = 'block';
-  }
-  btn.textContent = 'Sign In';
-  btn.disabled = false;
-});
-</script>
 </body>
 </html>

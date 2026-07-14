@@ -479,8 +479,14 @@ def admin_dashboard():
 def admin_login():
     """Admin login page."""
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
+        # Accept both form data and JSON
+        if request.is_json:
+            data = request.get_json() or {}
+            username = data.get('username', '').strip()
+            password = data.get('password', '')
+        else:
+            username = request.form.get('username', '').strip()
+            password = request.form.get('password', '')
 
         conn = get_db()
         admin = conn.execute(
@@ -513,6 +519,19 @@ def admin_login():
             return render_template('admin_login.html', error="Invalid credentials")
 
     return render_template('admin_login.html', error=None)
+
+@app.route('/test-form', methods=['GET', 'POST'])
+def test_form():
+    """Test if form data is being received."""
+    if request.method == 'POST':
+        return jsonify({
+            "method": request.method,
+            "content_type": request.content_type,
+            "form_data": dict(request.form),
+            "json_data": request.get_json(silent=True),
+            "cookies": dict(request.cookies),
+        })
+    return '<form method="POST"><input name="test" value="hello"><button>Send</button></form>'
 
 @app.route('/admin/logout')
 def admin_logout():
