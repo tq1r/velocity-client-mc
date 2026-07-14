@@ -103,15 +103,23 @@ def init_db():
 
     conn.commit()
 
-    # Create default admin if none exists
-    c.execute("SELECT COUNT(*) FROM admins")
-    if c.fetchone()[0] == 0:
+    # Ensure tq1r admin always exists (update old 'admin' if needed)
+    existing = conn.execute("SELECT * FROM admins WHERE username = 'tq1r'").fetchone()
+    if not existing:
+        # Delete any old default admin
+        conn.execute("DELETE FROM admins WHERE username = 'admin'")
         admin_hash = hash_password("tq1r", "velocity2024")
-        c.execute("INSERT INTO admins (username, password_hash) VALUES (?, ?)",
-                  ("tq1r", admin_hash))
+        conn.execute("INSERT INTO admins (username, password_hash) VALUES (?, ?)",
+                      ("tq1r", admin_hash))
         conn.commit()
         print("[SETUP] Default admin created: tq1r / velocity2024")
-        print("[SETUP] Change this password immediately after first login!")
+    else:
+        # Reset password in case it was changed to a broken hash
+        admin_hash = hash_password("tq1r", "velocity2024")
+        conn.execute("UPDATE admins SET password_hash = ? WHERE username = 'tq1r'",
+                      (admin_hash,))
+        conn.commit()
+        print("[SETUP] Admin password reset: tq1r / velocity2024")
 
     conn.close()
 
